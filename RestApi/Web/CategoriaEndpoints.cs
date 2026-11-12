@@ -9,8 +9,8 @@ public static class CategoriaEndpoints
     {
         var grupo = app.MapGroup("/categorias"); // todas empiezan con /categorias
 
-        grupo.MapGet("/", async (CategoriaServicio s) =>
-            Results.Ok(await s.ObtenerTodasAsync()));
+        grupo.MapGet("/", (CategoriaServicio s) =>
+            Respuesta.Manejar(async () => Results.Ok(await s.ObtenerTodasAsync())));
 
         grupo.MapGet("/{id:int}", (int id, CategoriaServicio s) =>
             Respuesta.Manejar(async () => Results.Ok(await s.ObtenerPorIdAsync(id))));
