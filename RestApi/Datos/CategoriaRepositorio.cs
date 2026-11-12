@@ -3,7 +3,7 @@ using RestApi.Entidades;
 
 namespace RestApi.Datos
 {
-    public class CategoriaRepositorio(IConfiguration config)
+    public class CategoriaRepositorio(IConfiguration config) : ICategoriaRepositorio
     {
         private readonly string _cn = config.GetConnectionString("Restaurante")!;
 
@@ -13,7 +13,7 @@ namespace RestApi.Datos
             await using var cn = new SqlConnection(_cn);
             await cn.OpenAsync();
 
-            var cmd = new SqlCommand(
+            await using var cmd = new SqlCommand(
                 "SELECT Id, Nombre FROM Categorias ORDER BY Nombre", cn);
 
             await using var dr = await cmd.ExecuteReaderAsync();
@@ -33,7 +33,7 @@ namespace RestApi.Datos
             await using var cn = new SqlConnection(_cn);
             await cn.OpenAsync();
 
-            var cmd = new SqlCommand(
+            await using var cmd = new SqlCommand(
                 "INSERT INTO Categorias (Nombre) OUTPUT INSERTED.Id VALUES (@nombre)", cn);
             cmd.Parameters.AddWithValue("@nombre", c.Nombre);
 
@@ -46,7 +46,7 @@ namespace RestApi.Datos
             await cn.OpenAsync();
 
             await using var cmd = new SqlCommand(
-                "UPDATE Categorias SET Nombre = @nombre WHERE Id = @id AND Disponible = 1", cn);
+                "UPDATE Categorias SET Nombre = @nombre WHERE Id = @id", cn);
             cmd.Parameters.AddWithValue("@nombre", c.Nombre);
             cmd.Parameters.AddWithValue("@id", c.Id);
 
@@ -59,7 +59,7 @@ namespace RestApi.Datos
             await using var cn = new SqlConnection(_cn);
             await cn.OpenAsync();
 
-            var cmd = new SqlCommand(
+            await using var cmd = new SqlCommand(
                 "SELECT Id, Nombre FROM Categorias WHERE Id = @id", cn);
             cmd.Parameters.AddWithValue("@id", id);
 
@@ -87,20 +87,16 @@ namespace RestApi.Datos
             return await cmd.ExecuteNonQueryAsync() > 0;
         }
 
-
-        // Agrega este método dentro de tu CategoriaRepositorio.cs
         public async Task<int> ContarPlatosAsync(int categoriaId)
         {
             await using var cn = new SqlConnection(_cn);
             await cn.OpenAsync();
 
-            // Contamos cuántos platos activos están usando esta categoría
-            var cmd = new SqlCommand(
+            await using var cmd = new SqlCommand(
                 "SELECT COUNT(*) FROM Platos WHERE CategoriaId = @catId AND Disponible = 1", cn);
             cmd.Parameters.AddWithValue("@catId", categoriaId);
 
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
-
     }
 }
