@@ -4,7 +4,7 @@ using RestApi.Entidades;
 
 namespace RestApi.Datos;
 
-public class PlatoRepositorio(IConfiguration config)
+public class PlatoRepositorio(IConfiguration config) : IPlatoRepositorio
 {
     private readonly string _cn = config.GetConnectionString("Restaurante")!;
 
@@ -18,7 +18,7 @@ public class PlatoRepositorio(IConfiguration config)
         LeerAsync(SelectConCategoria + " WHERE p.Disponible = 1 ORDER BY c.Nombre, p.Nombre");
 
     public async Task<Plato?> ObtenerPorIdAsync(int id) =>
-        (await LeerAsync(SelectConCategoria + " WHERE p.Id = @id", ("@id", id))).FirstOrDefault();
+        (await LeerAsync(SelectConCategoria + " WHERE p.Id = @id AND p.Disponible = 1", ("@id", id))).FirstOrDefault();
 
     public Task<List<Plato>> ObtenerPorCategoriaAsync(int categoriaId) =>
         LeerAsync(SelectConCategoria + " WHERE p.CategoriaId = @cat AND p.Disponible = 1 ORDER BY p.Nombre",
@@ -30,10 +30,10 @@ public class PlatoRepositorio(IConfiguration config)
         await cn.OpenAsync();
 
         // Agregamos Disponible al INSERT
-        var cmd = new SqlCommand(
+        await using var cmd = new SqlCommand(
             "INSERT INTO Platos (Nombre, Descripcion, Precio, CategoriaId, Disponible) OUTPUT INSERTED.Id VALUES (@nombre, @desc, @precio, @cat, @disp)", cn);
         cmd.Parameters.AddWithValue("@nombre", p.Nombre);
-        cmd.Parameters.AddWithValue("@desc", (object)p.Descripcion! ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@desc", (object?)p.Descripcion ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@precio", p.Precio);
         cmd.Parameters.AddWithValue("@cat", p.CategoriaId);
         cmd.Parameters.AddWithValue("@disp", p.Disponible); // Guardamos el estado enviado
@@ -41,7 +41,7 @@ public class PlatoRepositorio(IConfiguration config)
         return (int)(await cmd.ExecuteScalarAsync())!;
     }
 
-        public async Task<int> ActualizarAsync(Plato p)
+    public async Task<int> ActualizarAsync(Plato p)
     {
         await using var cn = new SqlConnection(_cn);
         await cn.OpenAsync();
@@ -50,7 +50,7 @@ public class PlatoRepositorio(IConfiguration config)
         await using var cmd = new SqlCommand(
             "UPDATE Platos SET Nombre = @nombre, Descripcion = @desc, Precio = @precio, CategoriaId = @cat, Disponible = @disp WHERE Id = @id", cn);
         cmd.Parameters.AddWithValue("@nombre", p.Nombre);
-        cmd.Parameters.AddWithValue("@desc", (object)p.Descripcion! ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@desc", (object?)p.Descripcion ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@precio", p.Precio);
         cmd.Parameters.AddWithValue("@cat", p.CategoriaId);
         cmd.Parameters.AddWithValue("@disp", p.Disponible); // Permite cambiar a true o false
@@ -58,7 +58,6 @@ public class PlatoRepositorio(IConfiguration config)
 
         return await cmd.ExecuteNonQueryAsync();
     }
-
 
     public async Task<int> EliminarAsync(int id)
     {
@@ -91,14 +90,9 @@ public class PlatoRepositorio(IConfiguration config)
                 Descripcion = dr.IsDBNull(2) ? "" : dr.GetString(2),
                 Precio = dr.GetDecimal(3),
                 CategoriaId = dr.GetInt32(4),
-
-                // 1. Agregamos Disponible leyendo la columna booleana (Índice 5)
                 Disponible = dr.GetBoolean(5),
-
-                // 2. Desplazamos Categoria para que lea el nuevo Índice 6
                 Categoria = dr.IsDBNull(6) ? "" : dr.GetString(6)
             });
-
         }
         return lista;
     }

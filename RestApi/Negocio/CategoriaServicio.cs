@@ -3,7 +3,7 @@ using RestApi.Entidades;
 
 namespace RestApi.Negocio
 {
-    public class CategoriaServicio(CategoriaRepositorio repo)
+    public class CategoriaServicio(ICategoriaRepositorio repo)
     {
         // Imagen 1: Obtener todas usando la expresión shorthand (=>)
         public Task<List<Categoria>> ObtenerTodasAsync() => repo.ObtenerTodosAsync();

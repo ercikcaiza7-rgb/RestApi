@@ -9,8 +9,8 @@ public static class PlatoEndpoints
     {
         var grupo = app.MapGroup("/platos"); // Todas empiezan con /platos
 
-        grupo.MapGet("/", async (PlatoServicio s) =>
-            Results.Ok(await s.ObtenerTodosAsync()));
+        grupo.MapGet("/", (PlatoServicio s) =>
+            Respuesta.Manejar(async () => Results.Ok(await s.ObtenerTodosAsync())));
 
         grupo.MapGet("/{id:int}", (int id, PlatoServicio s) =>
             Respuesta.Manejar(async () => Results.Ok(await s.ObtenerPorIdAsync(id))));
