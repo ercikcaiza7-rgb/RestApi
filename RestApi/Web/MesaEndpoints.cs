@@ -8,9 +8,9 @@ namespace RestApi.Web
             public static void MapMesaEndpoints(
                 this IEndpointRouteBuilder app)
             {
-                var g = app.MapGroup("/mesas");
+                var g = app.MapGroup("/mesas").RequireAuthorization("SoloAdmin");
 
-                g.MapGet("", async (MesaServicio s) =>
+            g.MapGet("", async (MesaServicio s) =>
                     Results.Ok(await s.ListarAsync()));
 
                 g.MapGet("/{id:int}", (int id, MesaServicio s) =>

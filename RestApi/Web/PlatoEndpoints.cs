@@ -21,7 +21,7 @@ public static class PlatoEndpoints
                 var nuevoId = await s.AgregarAsync(p);
                 p.Id = nuevoId;
                 return Results.Created($"/platos/{nuevoId}", p);
-            }));
+            })).RequireAuthorization("SoloAdmin"); ;
 
         grupo.MapPut("/{id:int}", (int id, Plato p, PlatoServicio s) =>
             Respuesta.Manejar(async () =>
@@ -29,14 +29,14 @@ public static class PlatoEndpoints
                 p.Id = id;
                 await s.ActualizarAsync(p);
                 return Results.Ok(p); // Retorna 200 con el objeto modificado tal cual tu imagen
-            }));
+            })).RequireAuthorization("SoloAdmin"); ;
 
         grupo.MapDelete("/{id:int}", (int id, PlatoServicio s) =>
             Respuesta.Manejar(async () =>
             {
                 await s.EliminarAsync(id);
                 return Results.NoContent(); // Retorna 204
-            }));
+            })).RequireAuthorization("SoloAdmin"); ;
     }
 }
 
